@@ -1,41 +1,16 @@
 import { defineNuxtPlugin, useAppConfig, useState } from '#app'
-import detectEthereumProvider from '@metamask/detect-provider'
 import Web3 from 'web3'
-import { provider as Provider } from 'web3-core'
-import { Ref } from 'nuxt/dist/app/compat/capi'
-
-import { get } from '../helpers'
-import ProviderDetectClient from '../components/MetamaskProvider/client.vue'
-
-interface MetaStatesType {
-  connected: boolean,
-  address: string|null,
-  chainId: number|null,
-  installed: boolean,
-}
-
-interface NuxtMetamaskOptions {
-  addPlugin: boolean,
-  client:boolean
-}
-
-interface MetaMaskPluginType{
-  states:MetaStatesType,
-  install: (origin:string, query:Object) => void,
-  connect: () => Promise<string>,
-  load: () => Promise<Web3|false>,
-  web3: () => Web3,
- }
-
-let initialized:boolean = false
+import detectEthereumProvider from './helpers/detect-provider'
+import Contracts from './contracts'
+import EthereumProviderListener from './helpers/listener'
+import type { MetaMaskPluginType, MetaStatesType, Window, onConnectCallback, WindowEthereum } from './types'
 
 let web3:Web3|null
-const useWeb3 = () => {
-  if (!initialized) { throw new Error('useWeb3 must be called in context of MetaMaskPlugin') }
-  return web3
-}
 
 export default defineNuxtPlugin((nuxtApp) => {
+  let __onChangeCancel:Function = () => {}
+  const __listeners:onConnectCallback[] = []
+
   const _states:MetaStatesType = {
     connected: false,
     address: null,
@@ -43,7 +18,71 @@ export default defineNuxtPlugin((nuxtApp) => {
     installed: false
   }
 
-  const states = useState<MetaStatesType>('meta', () => _states)
+  const states = useState<MetaStatesType>('metamaskStates', () => _states)
+
+  const __setOnChange = (eth: WindowEthereum) => {
+    if (__onChangeCancel) {
+      __onChangeCancel()
+    }
+    __onChangeCancel = EthereumProviderListener(eth, (type, data) => {
+      switch (`${type}`.trim()) {
+        case 'accounts':{
+          if ((data as string[]).length > 0) {
+             states.value.address = data[0]
+          } else {
+              states.value.address = null
+              states.value.connected = false
+          }
+          break
+        }
+        case 'connect':
+        case 'chain':{
+          states.value.chainId = data?.chainId ? Number(data.chainId) : Number(data)
+          break
+        }
+        case 'disconnect':{
+          states.value.connected = false
+          states.value.address = null
+          break
+        }
+      }
+    })
+  }
+  const triggerCallbacks = () => {
+    if (states.value.connected && states.value.address) {
+      __listeners.forEach((callback, index) => {
+        callback(states.value.address)
+        __listeners.splice(index, 1)
+      })
+    }
+  }
+
+  // optional method to check fasty if metamask is installed and connected
+  const isConnected:() => boolean = () => {
+    if (typeof window !== 'undefined') {
+        if (states.value.connected && states.value.address) {
+          triggerCallbacks()
+          return true
+        }
+
+        const w = window as Window
+
+      if (w.ethereum != null) {
+        states.value.installed = true
+
+        if (Web3.utils.isAddress(w.ethereum.selectedAddress)) {
+          web3 = new Web3(w.ethereum)
+          __setOnChange(web3.currentProvider as WindowEthereum)
+          states.value.chainId = Number(w.ethereum.chainId)
+          states.value.address = w.ethereum.selectedAddress
+          states.value.connected = true
+          triggerCallbacks()
+          return true
+        }
+      }
+    }
+    return false
+  }
 
   const plugin:MetaMaskPluginType = {
     states: {
@@ -52,12 +91,50 @@ export default defineNuxtPlugin((nuxtApp) => {
       get chainId () { return states.value.chainId },
       get installed () { return states.value.installed }
     },
+    onConnect (callback:onConnectCallback) {
+      if (callback && isConnected()) {
+        callback(states.value.address)
+      } else if (callback != null) {
+        __listeners.push(callback)
+      }
+    },
+    onChange (callback: (type:string, data:any) => void) {
+        if (!web3) {
+          throw new TypeError('provider not found')
+        }
+        return EthereumProviderListener(web3?.currentProvider as WindowEthereum, callback)
+    },
     async connect () {
-      if (states.value.connected && states.value.address) { return states.value.address };
-      const web3:Web3 = await this.load()
+      if (isConnected()) { return states.value.address };
+      web3 = await this.load()
       return web3.eth.requestAccounts().then((accounts) => {
+        if (accounts.length === 0) {
+          return
+        }
+
         states.value.connected = true
         states.value.address = accounts[0]
+        isConnected()
+        return accounts[0]
+      })
+    },
+    async account () {
+       if (isConnected()) {
+        return states.value.address
+       }
+
+       if (!states.value.installed || !web3) {
+          return null
+       }
+
+      return await web3.eth.getAccounts().then((accounts) => {
+        if (accounts.length === 0) {
+          return
+        }
+
+        states.value.connected = true
+        states.value.address = accounts[0]
+        isConnected()
         return accounts[0]
       })
     },
@@ -66,14 +143,15 @@ export default defineNuxtPlugin((nuxtApp) => {
     },
     async load () {
       if (typeof window !== 'undefined') {
-        if (web3) { return web3 }
-
-        const provider = await detectEthereumProvider() as Provider
-        initialized = true
-
-        if (provider) {
-          states.value.installed = true
-          web3 = new Web3(provider)
+        web3 = web3 ?? await detectEthereumProvider().then(provider => provider ? new Web3(provider) : null)
+        if (web3) {
+          __setOnChange(web3.currentProvider as WindowEthereum)
+        }
+        if (!isConnected()) {
+          if (web3) {
+            states.value.installed = true
+            states.value.chainId = await web3.eth.getChainId().catch(() => null)
+          }
         }
 
         return web3
@@ -81,19 +159,20 @@ export default defineNuxtPlugin((nuxtApp) => {
         return false
       }
     },
-    web3 () { return web3 }
+    get Web3 () { return Web3 },
+    useWeb3 () { return web3 }
   }
 
   if (process.client) {
-     plugin.load().then(web3 => plugin.connect())
+      try {
+        plugin.load().then(web3 => plugin.account())
+      } catch (error) { }
   }
 
-  nuxtApp.provide('metamask', plugin)
-  nuxtApp.vueApp.component('ProviderDetect', ProviderDetectClient)
-})
+   nuxtApp.provide('metamask', plugin)
 
-export {
-  MetaStatesType,
-  MetaMaskPluginType,
-  useWeb3
-}
+   // insert contracts plugin
+   Contracts(nuxtApp)
+ })
+
+export { Web3 }
