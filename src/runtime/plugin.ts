@@ -3,11 +3,13 @@ import Web3 from 'web3'
 import detectEthereumProvider from './helpers/detect-provider'
 import Contracts from './contracts'
 import EthereumProviderListener from './helpers/listener'
+
+// types
 import type { MetaMaskPluginType, MetaStatesType, Window, onConnectCallback, WindowEthereum } from './types'
 
 let web3:Web3|null
 
-export default defineNuxtPlugin((nuxtApp) => {
+const NuxtMetamashPlugin = defineNuxtPlugin((nuxtApp) => {
   let __onChangeCancel:Function = () => {}
   const __listeners:onConnectCallback[] = []
 
@@ -173,6 +175,6 @@ export default defineNuxtPlugin((nuxtApp) => {
 
    // insert contracts plugin
    Contracts(nuxtApp)
- })
+})
 
-export { Web3 }
+export default NuxtMetamashPlugin

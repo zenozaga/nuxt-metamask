@@ -3,29 +3,29 @@ import type { AbiItem } from 'web3-utils/types'
 import type Web3 from 'web3/types'
 import type { provider } from 'web3-core/types'
 
-export type Abis = AbiItem[]
-export type EthereumProvider = provider & {chainId: string, selectedAddress:string }
-export type onConnectCallback = (address:string) => void
-export type WindowEthereum = EthereumProvider & {removeListener: (type:string, callback:Function) => void, addListener: (type:string, callback:Function) => void}
-export type FunctionVoid = () => void
+type Abis = AbiItem[]
+type EthereumProvider = provider & {chainId: string, selectedAddress:string }
+type onConnectCallback = (address:string) => void
+type WindowEthereum = EthereumProvider & {removeListener: (type:string, callback:Function) => void, addListener: (type:string, callback:Function) => void}
+type FunctionVoid = () => void
 // Contracts plugin types
 
-export type onChangeCallback = (ethereum:WindowEthereum, callback: (type:string, data:any) => void) => Function
-export type DefineContract = (name: string, abi: AbiItem[], address: string, providerURI?:string) => Contract
-export type GetContract = (name: string) => Contract
-export type MethodcontractAsync = (name: string, method: string, args?: any[], options?: {}, cache?:boolean) => Promise<unknown>
-export type Methodcontract = (name: string, method: string, args?: any[], options?: {}, cache?:boolean) => unknown
-export type GetContractAddress = (name:string) => string
+type onChangeCallback = (ethereum:WindowEthereum, callback: (type:string, data:any) => void) => Function
+type DefineContract = (name: string, abi: AbiItem[], address: string, providerURI?:string) => Contract
+type GetContract = (name: string) => Contract
+type MethodcontractAsync = (name: string, method: string, args?: any[], options?: {}, cache?:boolean) => Promise<unknown>
+type Methodcontract = (name: string, method: string, args?: any[], options?: {}, cache?:boolean) => unknown
+type GetContractAddress = (name:string) => string
 
-export interface Cacheinstances {
+interface Cacheinstances {
   [key: string]: Contract
 }
 
-export interface CacheinstancesResults {
+interface CacheinstancesResults {
   [key: string]: any
 }
 
-export interface MetaMaskEthereumProvider {
+interface MetaMaskEthereumProvider {
   isMetaMask?: boolean
   once(eventName: string | symbol, listener: (...args: any[]) => void): this
   on(eventName: string | symbol, listener: (...args: any[]) => void): this
@@ -35,9 +35,9 @@ export interface MetaMaskEthereumProvider {
   removeAllListeners(event?: string | symbol): this
 }
 
-export type Provider = MetaMaskEthereumProvider & provider & EthereumProvider
+type Provider = MetaMaskEthereumProvider & provider & EthereumProvider
 
-export interface Window {
+interface Window {
   ethereum?: Provider
 }
 
@@ -48,7 +48,7 @@ export interface Window {
  * @method send send a method from a contract
  * @method address get the address of a contract
  */
-export interface ContratsPlugin {
+interface ContratsPlugin {
   define: DefineContract,
   get: GetContract,
   call: MethodcontractAsync,
@@ -61,18 +61,18 @@ export interface ContratsPlugin {
 }
 
 // metamask lugin
-export interface MetaStatesType {
+interface MetaStatesType {
   connected: boolean,
     address: string | null,
     chainId: number | null,
     installed: boolean,
 }
-export interface NuxtMetamaskOptions {
+interface NuxtMetamaskOptions {
   addPlugin: boolean,
     client: boolean
 }
 
-export interface MetaMaskPluginType {
+interface MetaMaskPluginType {
   states: MetaStatesType,
     install: (origin: string, query: Object) => void,
     connect: () => Promise<string>,
@@ -82,4 +82,28 @@ export interface MetaMaskPluginType {
     account:() => Promise<string|null>
     onConnect: (callback: (address: string) => void) => void,
     onChange: (callback: (type:string, data:any) => void) => Function,
+}
+
+export {
+  Abis,
+  EthereumProvider,
+  onConnectCallback,
+  WindowEthereum,
+  FunctionVoid,
+  onChangeCallback,
+  DefineContract,
+  GetContract,
+  MethodcontractAsync,
+  Methodcontract,
+  GetContractAddress,
+  Cacheinstances,
+  CacheinstancesResults,
+  MetaMaskEthereumProvider,
+  Provider,
+  ContratsPlugin,
+  MetaStatesType,
+  NuxtMetamaskOptions,
+  MetaMaskPluginType,
+  Web3,
+  Window
 }

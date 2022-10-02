@@ -1,13 +1,11 @@
 import { defineNuxtModule, addPlugin, createResolver, addComponentsDir, addImportsDir } from '@nuxt/kit'
-import Web3 from 'web3'
-
 interface NuxtMetamaskOptions {
   addPlugin: boolean,
   client:boolean
 }
 
 export {
- Web3
+  NuxtMetamaskOptions
 }
 
 export default defineNuxtModule<NuxtMetamaskOptions>({
@@ -24,6 +22,25 @@ export default defineNuxtModule<NuxtMetamaskOptions>({
   },
   setup (options, nuxt) {
     if (options.addPlugin) {
+      const config = nuxt.options
+      if (!config.vite) {
+        config.vite = {}
+      }
+
+      if (!config.vite.optimizeDeps) {
+        config.vite.optimizeDeps = {}
+      }
+
+      const optimizeDeps = config.vite.optimizeDeps
+
+      if (typeof optimizeDeps.include === 'undefined') {
+        optimizeDeps.include = [
+          'web3'
+        ]
+      } else {
+        optimizeDeps.include.push('web3')
+      }
+
       // Create resolver to resolve relative paths
       const { resolve } = createResolver(import.meta.url)
       addPlugin(resolve('./runtime/plugin'))

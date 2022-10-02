@@ -1,8 +1,15 @@
 {
   "name": "nuxt-metamask",
-  "version": "1.1.5",
+  "version": "2.0.4",
   "license": "MIT",
   "type": "module",
+  "keywords": [
+    "nuxt",
+    "nuxt3",
+    "vue",
+    "web3",
+    "metamask"
+  ],
   "exports": {
     ".": {
       "import": "./dist/module.mjs",
@@ -23,7 +30,7 @@
   },
   "dependencies": {
     "@nuxt/kit": "^3.0.0-rc.11",
-    "web3": "^1.8.0"
+    "web3": "^4.0.1-alpha.0"
   },
   "devDependencies": {
     "@nuxt/module-builder": "latest",
@@ -34,6 +41,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/sonyzach/usfm-validator.git"
+    "url": "https://github.com/zenozaga/nuxt-metamask.git"
   }
 }
