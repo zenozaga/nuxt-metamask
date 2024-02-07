@@ -11,10 +11,7 @@ export {
 export default defineNuxtModule<NuxtMetamaskOptions>({
   meta: {
     name: 'nuxt-metamask',
-    configKey: 'metaConfig',
-    compatibility: {
-      nuxt: '^3.0.0-rc.3'
-    }
+    configKey: 'metaConfig'
   },
   defaults: {
     addPlugin: true,
@@ -35,7 +32,8 @@ export default defineNuxtModule<NuxtMetamaskOptions>({
 
       if (typeof optimizeDeps.include === 'undefined') {
         optimizeDeps.include = [
-          'web3'
+          'web3',
+          '@zenozaga/ethereum-ibridged'
         ]
       } else {
         optimizeDeps.include.push('web3')

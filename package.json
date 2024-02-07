@@ -1,6 +1,6 @@
 {
   "name": "nuxt-metamask",
-  "version": "2.0.4",
+  "version": "3.0.1",
   "license": "MIT",
   "type": "module",
   "keywords": [
@@ -23,21 +23,23 @@
   ],
   "scripts": {
     "prepack": "nuxt-module-build",
-    "dev": "nuxi dev playground",
+    "dev": "nuxi dev playground --experimental-specifier-resolution=node",
     "dev:build": "nuxi build playground",
     "dev:prepare": "nuxt-module-build --stub && nuxi prepare playground",
+    "prepublish": "nuxt-module-build",
     "publish": "npm publish --access public"
   },
   "dependencies": {
-    "@nuxt/kit": "^3.0.0-rc.11",
-    "web3": "^4.0.1-alpha.0"
+    "@nuxt/kit": "^3.10.1",
+    "@zenozaga/ethereum-ibridged": "1.1.2",
+    "web3": "^4.4.0"
   },
   "devDependencies": {
-    "@nuxt/module-builder": "latest",
-    "@nuxt/schema": "^3.0.0-rc.11",
-    "@nuxtjs/eslint-config-typescript": "latest",
-    "eslint": "latest",
-    "nuxt": "^3.0.0-rc.11"
+    "@nuxt/module-builder": "^0.5.5",
+    "@nuxt/schema": "^3.10.1",
+    "@nuxtjs/eslint-config-typescript": "^12.1.0",
+    "eslint": "^8.56.0",
+    "nuxt": "^3.10.1"
   },
   "repository": {
     "type": "git",

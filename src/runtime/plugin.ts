@@ -1,6 +1,7 @@
 import { defineNuxtPlugin, useAppConfig, useState } from '#app'
-import Web3 from 'web3'
-import detectEthereumProvider from './helpers/detect-provider'
+import Web3, { validator } from 'web3'
+import { detectEthereumProvider } from '@zenozaga/ethereum-ibridged'
+
 import Contracts from './contracts'
 import EthereumProviderListener from './helpers/listener'
 
@@ -10,14 +11,22 @@ import type { MetaMaskPluginType, MetaStatesType, Window, onConnectCallback, Win
 let web3:Web3|null
 
 const NuxtMetamashPlugin = defineNuxtPlugin((nuxtApp) => {
+  /// listener for onConnect
   let __onChangeCancel:Function = () => {}
+
+  /// listeners for onConnect
   const __listeners:onConnectCallback[] = []
 
+  /// try to find ethereum provider to check if metamask is installed
+  /// if not found then metamask is not installed
+  const ethereum:any|null = (typeof window !== 'undefined' && (window as Window).ethereum != null) ? (window as Window).ethereum : null
+  const initialAddress = ethereum?.selectedAddress ?? null
+
   const _states:MetaStatesType = {
-    connected: false,
-    address: null,
-    chainId: null,
-    installed: false
+    installed: ethereum != null,
+    connected: initialAddress != null,
+    address: initialAddress,
+    chainId: (ethereum?.chainId as number) ?? null
   }
 
   const states = useState<MetaStatesType>('metamaskStates', () => _states)
@@ -72,7 +81,7 @@ const NuxtMetamashPlugin = defineNuxtPlugin((nuxtApp) => {
       if (w.ethereum != null) {
         states.value.installed = true
 
-        if (Web3.utils.isAddress(w.ethereum.selectedAddress)) {
+        if (validator.isAddress(w.ethereum.selectedAddress)) {
           web3 = new Web3(w.ethereum)
           __setOnChange(web3.currentProvider as WindowEthereum)
           states.value.chainId = Number(w.ethereum.chainId)
@@ -100,16 +109,18 @@ const NuxtMetamashPlugin = defineNuxtPlugin((nuxtApp) => {
         __listeners.push(callback)
       }
     },
-    onChange (callback: (type:string, data:any) => void) {
-        if (!web3) {
-          throw new TypeError('provider not found')
-        }
+    onChange (callback: (type:string, data:any) => void): Function|null {
+       try {
         return EthereumProviderListener(web3?.currentProvider as WindowEthereum, callback)
+       } catch (error) {
+        globalThis?.console?.error(error)
+         return null
+       }
     },
     async connect () {
       if (isConnected()) { return states.value.address };
       web3 = await this.load()
-      return web3.eth.requestAccounts().then((accounts) => {
+      return web3?.eth.requestAccounts().then((accounts) => {
         if (accounts.length === 0) {
           return
         }

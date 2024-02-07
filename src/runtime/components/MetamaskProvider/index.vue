@@ -10,28 +10,26 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineNuxtComponent } from '#app'
-export default defineNuxtComponent({
-    props: {
-        client: {
-            type: Boolean,
-            default: true
-        }
-    },
-    data () {
-        return {
-            isLoading: true
-        }
-    },
-    mounted () {
-        const $this = this
-        this.$metamask.load().then(() => {
-            $this.isLoading = false
-        }).catch(() => {
-            $this.isLoading = false
-        })
+<script setup lang="ts">
+import { onMounted, ref } from 'vue'
+import { useMetamask } from '../../composables/use-metamask'
+
+const isLoading = ref(true)
+const $metamask = useMetamask()
+
+defineProps({
+    client: {
+        type: Boolean,
+        default: true
     }
+})
+
+onMounted(() => {
+    $metamask.load().then(() => {
+        isLoading.value = false
+    }).catch(() => {
+        isLoading.value = false
+    })
 })
 
 </script>

@@ -1,6 +1,6 @@
 // *eslint-disable */
 import { defineNuxtPlugin, useAppConfig, useState, useNuxtApp } from '#app'
-import Web3 from 'web3'
+import _Web3, { providers } from 'web3'
 import type { ContratsPlugin, Cacheinstances, DefineContract, MetaMaskPluginType, Abis, CacheinstancesResults } from './types'
 
 export default defineNuxtPlugin((app) => {
@@ -26,7 +26,7 @@ export default defineNuxtPlugin((app) => {
             let Contract
 
             if (providerURI) {
-                Contract = (new Web3(new Web3.providers.HttpProvider(providerURI))).eth.Contract
+                Contract = (new _Web3(new providers.http.HttpProvider(providerURI))).eth.Contract
             } else {
                 const $metamask: MetaMaskPluginType = app.$metamask
                 Contract = $metamask.useWeb3().eth.Contract
