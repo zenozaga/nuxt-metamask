@@ -66,8 +66,8 @@ yarn add nuxt-metamask
 &nbsp; 2. using states in template
 - Metamask states
 ```js
-// get $metamask using `useNuxtapp`
-const { $metamask } = useNuxtapp();
+// get $metamask using `useNuxtApp`
+const { $metamask } = useNuxtApp();
 
 //states of $metamask.states
 /*
